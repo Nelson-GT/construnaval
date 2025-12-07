@@ -4,6 +4,7 @@ import React from "react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/loading-button"
 import { ArrowLeft, Calendar, Package, Users, Wrench, Plus, FileText, History } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import useSWR from "swr"
@@ -49,6 +50,7 @@ export default function BarcoDetallePage({ params }: { params: Promise<{ id: str
   const [expandedSemana, setExpandedSemana] = useState<number | null>(null)
   const [isAddConsumoOpen, setIsAddConsumoOpen] = useState(false)
   const [currentSemanaId, setCurrentSemanaId] = useState<number | null>(null)
+  const [isAddingConsumo, setIsAddingConsumo] = useState(false)
 
   const { data: semanaDetails, mutate: mutateSemanaDetails } = useSWR(
     expandedSemana ? `/api/semanas/${expandedSemana}` : null,
@@ -98,21 +100,26 @@ export default function BarcoDetallePage({ params }: { params: Promise<{ id: str
 
   const handleAddConsumo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    setIsAddingConsumo(true)
+    try {
+      const formData = new FormData(e.currentTarget)
 
-    await fetch(`/api/semanas/${currentSemanaId}/consumos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id_material: Number.parseInt(formData.get("id_material") as string),
-        fecha_registro: formData.get("fecha_registro"),
-        cantidad_consumida: Number.parseFloat(formData.get("cantidad_consumida") as string),
-      }),
-    })
+      await fetch(`/api/semanas/${currentSemanaId}/consumos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_material: Number.parseInt(formData.get("id_material") as string),
+          fecha_registro: formData.get("fecha_registro"),
+          cantidad_consumida: Number.parseFloat(formData.get("cantidad_consumida") as string),
+        }),
+      })
 
-    mutateSemanaDetails()
-    mutateSemanas()
-    setIsAddConsumoOpen(false)
+      mutateSemanaDetails()
+      mutateSemanas()
+      setIsAddConsumoOpen(false)
+    } finally {
+      setIsAddingConsumo(false)
+    }
   }
 
   if (!barcoId) return <div className="p-8">Cargando...</div>
@@ -411,9 +418,14 @@ export default function BarcoDetallePage({ params }: { params: Promise<{ id: str
                                 />
                               </div>
 
-                              <Button type="submit" className="w-full">
+                              <LoadingButton
+                                type="submit"
+                                isLoading={isAddingConsumo}
+                                loadingText="Registrando..."
+                                className="w-full"
+                              >
                                 Registrar Consumo
-                              </Button>
+                              </LoadingButton>
                             </form>
                           </DialogContent>
                         </Dialog>
