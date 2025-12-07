@@ -177,7 +177,7 @@ export default function BarcoDetallePage({ params }: { params: Promise<{ id: str
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {barco.tonelaje_inicial ? `${barco.tonelaje_inicial.toLocaleString()} Ton` : "N/A"}
+                {barco.tonelaje_inicial ? `${barco.tonelaje_inicial.toString()} Ton` : "N/A"}
               </div>
             </CardContent>
           </Card>

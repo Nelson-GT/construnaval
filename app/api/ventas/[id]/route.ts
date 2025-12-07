@@ -8,28 +8,27 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const {
       numero_guia,
       fecha_salida,
-      nombre_material,
-      cantidad_material,
-      unidad_medida,
       nombre_comprador,
       destino_ubicacion,
       placa_gandola,
+      materiales, // Array of materials
     } = body
 
+    // Update main sale record
     await query(
-      "UPDATE Ventas_Salidas SET numero_guia = ?, fecha_salida = ?, nombre_material = ?, cantidad_material = ?, unidad_medida = ?, nombre_comprador = ?, destino_ubicacion = ?, placa_gandola = ? WHERE id_salida = ?",
-      [
-        numero_guia,
-        fecha_salida,
-        nombre_material,
-        cantidad_material,
-        unidad_medida,
-        nombre_comprador,
-        destino_ubicacion,
-        placa_gandola,
-        id,
-      ],
+      "UPDATE Ventas_Salidas SET numero_guia = ?, fecha_salida = ?, nombre_comprador = ?, destino_ubicacion = ?, placa_gandola = ? WHERE id_salida = ?",
+      [numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola, id],
     )
+
+    await query("DELETE FROM Detalles_Venta WHERE id_salida = ?", [id])
+
+    for (const material of materiales) {
+      await query("INSERT INTO Detalles_Venta (id_salida, id_material, cantidad_material) VALUES (?, ?, ?)", [
+        id,
+        material.id_material,
+        material.cantidad_material,
+      ])
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

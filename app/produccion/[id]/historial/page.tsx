@@ -65,7 +65,7 @@ export default function HistorialCompletoPage({ params }: { params: Promise<{ id
                 <div>
                   <p className="text-sm text-muted-foreground">Tonelaje Inicial</p>
                   <p className="font-semibold">
-                    {barco.tonelaje_inicial ? `${barco.tonelaje_inicial.toLocaleString()} Ton` : "N/A"}
+                    {barco.tonelaje_inicial ? `${barco.tonelaje_inicial.toString()} Ton` : "N/A"}
                   </p>
                 </div>
               </div>

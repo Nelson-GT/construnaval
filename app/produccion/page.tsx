@@ -5,7 +5,7 @@ import type React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Pencil } from "lucide-react"
+import { Plus, Search, Pencil, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import useSWR from "swr"
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LoadingButton } from "@/components/loading-button"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -31,6 +32,9 @@ export default function ProduccionPage() {
   const [editingBarco, setEditingBarco] = useState<Barco | null>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isNewOpen, setIsNewOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
 
   const filteredBarcos = barcos?.filter(
     (barco) =>
@@ -40,47 +44,77 @@ export default function ProduccionPage() {
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      codigo_humano: formData.get("codigo_humano"),
-      nombre: formData.get("nombre"),
-      fecha_ingreso: formData.get("fecha_ingreso"),
-      tonelaje_inicial: Number.parseFloat(formData.get("tonelaje_inicial") as string),
-      estado: formData.get("estado"),
+    setIsCreating(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const data = {
+        codigo_humano: formData.get("codigo_humano"),
+        nombre: formData.get("nombre"),
+        fecha_ingreso: formData.get("fecha_ingreso"),
+        tonelaje_inicial: Number.parseFloat(formData.get("tonelaje_inicial") as string),
+        estado: formData.get("estado"),
+      }
+
+      const response = await fetch("/api/barcos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        mutate()
+        setIsNewOpen(false)
+      }
+    } finally {
+      setIsCreating(false)
     }
-
-    await fetch("/api/barcos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-
-    mutate()
-    setIsNewOpen(false)
   }
 
   const handleEdit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!editingBarco) return
 
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      codigo_humano: formData.get("codigo_humano"),
-      nombre: formData.get("nombre"),
-      fecha_ingreso: formData.get("fecha_ingreso"),
-      tonelaje_inicial: Number.parseFloat(formData.get("tonelaje_inicial") as string),
-      estado: formData.get("estado"),
+    setIsEditing(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const data = {
+        codigo_humano: formData.get("codigo_humano"),
+        nombre: formData.get("nombre"),
+        fecha_ingreso: formData.get("fecha_ingreso"),
+        tonelaje_inicial: Number.parseFloat(formData.get("tonelaje_inicial") as string),
+        estado: formData.get("estado"),
+      }
+
+      const response = await fetch(`/api/barcos/${editingBarco.id_barco}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        mutate()
+        setIsEditOpen(false)
+        setEditingBarco(null)
+      }
+    } finally {
+      setIsEditing(false)
     }
+  }
 
-    await fetch(`/api/barcos/${editingBarco.id_barco}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
+  const handleDelete = async (id: number) => {
+    setIsDeleting(id)
+    try {
+      const response = await fetch(`/api/barcos/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      })
 
-    mutate()
-    setIsEditOpen(false)
-    setEditingBarco(null)
+      if (response.ok) {
+        mutate()
+      }
+    } finally {
+      setIsDeleting(null)
+    }
   }
 
   if (error) return <div className="p-8">Error al cargar los datos</div>
@@ -95,10 +129,10 @@ export default function ProduccionPage() {
         </div>
         <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="gap-2">
+            <LoadingButton size="lg" isLoading={isCreating} loadingText="Creando..." className="gap-2">
               <Plus className="h-5 w-5" />
               Nuevo Barco
-            </Button>
+            </LoadingButton>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -141,9 +175,9 @@ export default function ProduccionPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" className="w-full">
+              <LoadingButton type="submit" isLoading={isCreating} loadingText="Creando..." className="w-full">
                 Crear Barco
-              </Button>
+              </LoadingButton>
             </form>
           </DialogContent>
         </Dialog>
@@ -190,7 +224,7 @@ export default function ProduccionPage() {
                   </TableCell>
                   <TableCell>{new Date(barco.fecha_ingreso).toLocaleDateString("es-VE")}</TableCell>
                   <TableCell>
-                    {barco.tonelaje_inicial ? `${barco.tonelaje_inicial.toLocaleString()} Ton` : "N/A"}
+                    {barco.tonelaje_inicial ? `${barco.tonelaje_inicial.toString()} Ton` : "N/A"}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -201,7 +235,7 @@ export default function ProduccionPage() {
                       {barco.estado}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-2">
                     <Dialog open={isEditOpen && editingBarco?.id_barco === barco.id_barco} onOpenChange={setIsEditOpen}>
                       <DialogTrigger asChild>
                         <Button
@@ -267,12 +301,27 @@ export default function ProduccionPage() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <Button type="submit" className="w-full">
+                          <LoadingButton
+                            type="submit"
+                            isLoading={isEditing}
+                            loadingText="Guardando..."
+                            className="w-full"
+                          >
                             Guardar Cambios
-                          </Button>
+                          </LoadingButton>
                         </form>
                       </DialogContent>
                     </Dialog>
+                    <LoadingButton
+                      variant="ghost"
+                      size="sm"
+                      isLoading={isDeleting === barco.id_barco}
+                      loadingText="..."
+                      onClick={() => handleDelete(barco.id_barco)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </LoadingButton>
                   </TableCell>
                 </TableRow>
               ))}

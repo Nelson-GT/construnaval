@@ -5,7 +5,7 @@ import type React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Pencil } from "lucide-react"
+import { Plus, Search, Pencil, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import useSWR from "swr"
 import { useState } from "react"
@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { LoadingButton } from "@/components/loading-button"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -27,6 +28,9 @@ export default function TrabajadoresPage() {
   const [isNewOpen, setIsNewOpen] = useState(false)
   const [editingTrabajador, setEditingTrabajador] = useState<any>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
 
   const filteredTrabajadores = trabajadores?.filter(
     (t: any) =>
@@ -38,55 +42,85 @@ export default function TrabajadoresPage() {
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      cedula: formData.get("cedula"),
-      nombre: formData.get("nombre"),
-      apellido: formData.get("apellido"),
-      correo: formData.get("correo"),
-      telefono: formData.get("telefono"),
-      direccion: formData.get("direccion"),
-      puesto: formData.get("puesto"),
-      salario: Number.parseFloat(formData.get("salario") as string),
-      fecha_contratacion: formData.get("fecha_contratacion"),
+    setIsCreating(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const data = {
+        cedula: formData.get("cedula"),
+        nombre: formData.get("nombre"),
+        apellido: formData.get("apellido"),
+        correo: formData.get("correo"),
+        telefono: formData.get("telefono"),
+        direccion: formData.get("direccion"),
+        puesto: formData.get("puesto"),
+        salario: Number.parseFloat(formData.get("salario") as string),
+        fecha_contratacion: formData.get("fecha_contratacion"),
+      }
+
+      const response = await fetch("/api/trabajadores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        mutate()
+        setIsNewOpen(false)
+      }
+    } finally {
+      setIsCreating(false)
     }
-
-    await fetch("/api/trabajadores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-
-    mutate()
-    setIsNewOpen(false)
   }
 
   const handleEdit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!editingTrabajador) return
 
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      cedula: formData.get("cedula"),
-      nombre: formData.get("nombre"),
-      apellido: formData.get("apellido"),
-      correo: formData.get("correo"),
-      telefono: formData.get("telefono"),
-      direccion: formData.get("direccion"),
-      puesto: formData.get("puesto"),
-      salario: Number.parseFloat(formData.get("salario") as string),
-      fecha_contratacion: formData.get("fecha_contratacion"),
+    setIsEditing(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const data = {
+        cedula: formData.get("cedula"),
+        nombre: formData.get("nombre"),
+        apellido: formData.get("apellido"),
+        correo: formData.get("correo"),
+        telefono: formData.get("telefono"),
+        direccion: formData.get("direccion"),
+        puesto: formData.get("puesto"),
+        salario: Number.parseFloat(formData.get("salario") as string),
+        fecha_contratacion: formData.get("fecha_contratacion"),
+      }
+
+      const response = await fetch(`/api/trabajadores/${editingTrabajador.id_trabajador}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        mutate()
+        setIsEditOpen(false)
+        setEditingTrabajador(null)
+      }
+    } finally {
+      setIsEditing(false)
     }
+  }
 
-    await fetch(`/api/trabajadores/${editingTrabajador.id_trabajador}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
+  const handleDelete = async (id: number) => {
+    setIsDeleting(id)
+    try {
+      const response = await fetch(`/api/trabajadores/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      })
 
-    mutate()
-    setIsEditOpen(false)
-    setEditingTrabajador(null)
+      if (response.ok) {
+        mutate()
+      }
+    } finally {
+      setIsDeleting(null)
+    }
   }
 
   if (error) return <div className="p-8">Error al cargar los datos</div>
@@ -101,10 +135,10 @@ export default function TrabajadoresPage() {
         </div>
         <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="gap-2">
+            <LoadingButton size="lg" isLoading={isCreating} loadingText="Creando..." className="gap-2">
               <Plus className="h-5 w-5" />
               Nuevo Trabajador
-            </Button>
+            </LoadingButton>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -160,9 +194,9 @@ export default function TrabajadoresPage() {
                 <Label htmlFor="new_direccion">Dirección</Label>
                 <Input id="new_direccion" name="direccion" placeholder="Av. Principal, Puerto La Cruz" />
               </div>
-              <Button type="submit" className="w-full">
+              <LoadingButton type="submit" isLoading={isCreating} loadingText="Creando..." className="w-full">
                 Crear Trabajador
-              </Button>
+              </LoadingButton>
             </form>
           </DialogContent>
         </Dialog>
@@ -210,9 +244,9 @@ export default function TrabajadoresPage() {
                   <TableCell>{trabajador.puesto}</TableCell>
                   <TableCell className="text-sm">{trabajador.telefono}</TableCell>
                   <TableCell className="text-sm">{trabajador.correo}</TableCell>
-                  <TableCell className="font-bold">${trabajador.salario.toLocaleString()}</TableCell>
+                  <TableCell className="font-bold">${trabajador.salario.toString()}</TableCell>
                   <TableCell>{new Date(trabajador.fecha_contratacion).toLocaleDateString("es-VE")}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-2">
                     <Dialog
                       open={isEditOpen && editingTrabajador?.id_trabajador === trabajador.id_trabajador}
                       onOpenChange={setIsEditOpen}
@@ -300,12 +334,27 @@ export default function TrabajadoresPage() {
                             <Label htmlFor="direccion">Dirección</Label>
                             <Input id="direccion" name="direccion" defaultValue={editingTrabajador?.direccion || ""} />
                           </div>
-                          <Button type="submit" className="w-full">
+                          <LoadingButton
+                            type="submit"
+                            isLoading={isEditing}
+                            loadingText="Guardando..."
+                            className="w-full"
+                          >
                             Guardar Cambios
-                          </Button>
+                          </LoadingButton>
                         </form>
                       </DialogContent>
                     </Dialog>
+                    <LoadingButton
+                      variant="ghost"
+                      size="sm"
+                      isLoading={isDeleting === trabajador.id_trabajador}
+                      loadingText="..."
+                      onClick={() => handleDelete(trabajador.id_trabajador)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </LoadingButton>
                   </TableCell>
                 </TableRow>
               ))}

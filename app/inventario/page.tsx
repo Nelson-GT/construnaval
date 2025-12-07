@@ -5,7 +5,7 @@ import type React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, AlertTriangle, Search, Pencil } from "lucide-react"
+import { Plus, AlertTriangle, Search, Pencil, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import useSWR from "swr"
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LoadingButton } from "@/components/loading-button"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -29,6 +30,9 @@ export default function InventarioPage() {
   const [isNewOpen, setIsNewOpen] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState<any>(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
 
   const filteredMateriales = materiales?.filter((m: any) =>
     m.nombre_material.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -39,47 +43,77 @@ export default function InventarioPage() {
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      nombre_material: formData.get("nombre_material"),
-      tipo_material: formData.get("tipo_material"),
-      unidad_medida: formData.get("unidad_medida"),
-      stock_actual: Number.parseFloat(formData.get("stock_actual") as string),
-      stock_minimo: Number.parseFloat(formData.get("stock_minimo") as string),
+    setIsCreating(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const data = {
+        nombre_material: formData.get("nombre_material"),
+        tipo_material: formData.get("tipo_material"),
+        unidad_medida: formData.get("unidad_medida"),
+        stock_actual: Number.parseFloat(formData.get("stock_actual") as string),
+        stock_minimo: Number.parseFloat(formData.get("stock_minimo") as string),
+      }
+
+      const response = await fetch("/api/inventario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        mutate()
+        setIsNewOpen(false)
+      }
+    } finally {
+      setIsCreating(false)
     }
-
-    await fetch("/api/inventario", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
-
-    mutate()
-    setIsNewOpen(false)
   }
 
   const handleEdit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!editingMaterial) return
 
-    const formData = new FormData(e.currentTarget)
-    const data = {
-      nombre_material: formData.get("nombre_material"),
-      tipo_material: formData.get("tipo_material"),
-      unidad_medida: formData.get("unidad_medida"),
-      stock_actual: Number.parseFloat(formData.get("stock_actual") as string),
-      stock_minimo: Number.parseFloat(formData.get("stock_minimo") as string),
+    setIsEditing(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const data = {
+        nombre_material: formData.get("nombre_material"),
+        tipo_material: formData.get("tipo_material"),
+        unidad_medida: formData.get("unidad_medida"),
+        stock_actual: Number.parseFloat(formData.get("stock_actual") as string),
+        stock_minimo: Number.parseFloat(formData.get("stock_minimo") as string),
+      }
+
+      const response = await fetch(`/api/inventario/${editingMaterial.id_material}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        mutate()
+        setIsEditOpen(false)
+        setEditingMaterial(null)
+      }
+    } finally {
+      setIsEditing(false)
     }
+  }
 
-    await fetch(`/api/inventario/${editingMaterial.id_material}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    })
+  const handleDelete = async (id: number) => {
+    setIsDeleting(id)
+    try {
+      const response = await fetch(`/api/inventario/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      })
 
-    mutate()
-    setIsEditOpen(false)
-    setEditingMaterial(null)
+      if (response.ok) {
+        mutate()
+      }
+    } finally {
+      setIsDeleting(null)
+    }
   }
 
   if (error) return <div className="p-8">Error al cargar los datos</div>
@@ -94,10 +128,10 @@ export default function InventarioPage() {
         </div>
         <Dialog open={isNewOpen} onOpenChange={setIsNewOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="gap-2">
+            <LoadingButton size="lg" isLoading={isCreating} loadingText="Creando..." className="gap-2">
               <Plus className="h-5 w-5" />
               Nuevo Material
-            </Button>
+            </LoadingButton>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -134,9 +168,9 @@ export default function InventarioPage() {
                 <Label htmlFor="new_stock_minimo">Stock Mínimo</Label>
                 <Input id="new_stock_minimo" name="stock_minimo" type="number" step="0.01" defaultValue="10" required />
               </div>
-              <Button type="submit" className="w-full">
+              <LoadingButton type="submit" isLoading={isCreating} loadingText="Creando..." className="w-full">
                 Crear Material
-              </Button>
+              </LoadingButton>
             </form>
           </DialogContent>
         </Dialog>
@@ -157,7 +191,7 @@ export default function InventarioPage() {
                     <p className="text-sm text-muted-foreground">{material.unidad_medida}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">{material.stock_actual.toLocaleString()}</p>
+                    <p className="font-bold">{material.stock_actual.toString()}</p>
                     {material.stock_actual <= material.stock_minimo && (
                       <Badge variant="destructive" className="gap-1 mt-1">
                         <AlertTriangle className="h-3 w-3" />
@@ -185,7 +219,7 @@ export default function InventarioPage() {
                     <p className="text-sm text-muted-foreground">{material.unidad_medida}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">{material.stock_actual.toLocaleString()}</p>
+                    <p className="font-bold">{material.stock_actual.toString()}</p>
                     {material.stock_actual <= material.stock_minimo && (
                       <Badge variant="destructive" className="gap-1 mt-1">
                         <AlertTriangle className="h-3 w-3" />
@@ -236,8 +270,8 @@ export default function InventarioPage() {
                 <TableRow key={material.id_material}>
                   <TableCell className="font-medium">{material.nombre_material}</TableCell>
                   <TableCell>{material.tipo_material}</TableCell>
-                  <TableCell className="font-bold">{material.stock_actual.toLocaleString()}</TableCell>
-                  <TableCell>{material.stock_minimo.toLocaleString()}</TableCell>
+                  <TableCell className="font-bold">{material.stock_actual.toString()}</TableCell>
+                  <TableCell>{material.stock_minimo.toString()}</TableCell>
                   <TableCell>{material.unidad_medida}</TableCell>
                   <TableCell>
                     {material.stock_actual <= material.stock_minimo ? (
@@ -249,7 +283,7 @@ export default function InventarioPage() {
                       <Badge variant="default">Normal</Badge>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-2">
                     <Dialog
                       open={isEditOpen && editingMaterial?.id_material === material.id_material}
                       onOpenChange={setIsEditOpen}
@@ -325,12 +359,27 @@ export default function InventarioPage() {
                               required
                             />
                           </div>
-                          <Button type="submit" className="w-full">
+                          <LoadingButton
+                            type="submit"
+                            isLoading={isEditing}
+                            loadingText="Guardando..."
+                            className="w-full"
+                          >
                             Guardar Cambios
-                          </Button>
+                          </LoadingButton>
                         </form>
                       </DialogContent>
                     </Dialog>
+                    <LoadingButton
+                      variant="ghost"
+                      size="sm"
+                      isLoading={isDeleting === material.id_material}
+                      loadingText="..."
+                      onClick={() => handleDelete(material.id_material)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </LoadingButton>
                   </TableCell>
                 </TableRow>
               ))}

@@ -1,10 +1,31 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
-import type { VentaSalida } from "@/lib/mock-data"
 
 export async function GET() {
   try {
-    const ventas = await query<VentaSalida[]>("SELECT * FROM Ventas_Salidas ORDER BY fecha_salida DESC")
+    const ventas = await query(
+      `SELECT 
+        vs.id_salida,
+        vs.numero_guia,
+        vs.fecha_salida,
+        vs.nombre_comprador,
+        vs.destino_ubicacion,
+        vs.placa_gandola,
+        JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'id_detalle', dv.id_detalle,
+            'id_material', dv.id_material,
+            'nombre_material', im.nombre_material,
+            'cantidad_material', dv.cantidad_material,
+            'unidad_medida', im.unidad_medida
+          )
+        ) as materiales
+      FROM Ventas_Salidas vs
+      LEFT JOIN Detalles_Venta dv ON vs.id_salida = dv.id_salida
+      LEFT JOIN Inventario_Materiales im ON dv.id_material = im.id_material
+      GROUP BY vs.id_salida
+      ORDER BY vs.fecha_salida DESC`,
+    )
     return NextResponse.json(ventas)
   } catch (error) {
     console.error("[v0] Error fetching ventas:", error)
@@ -18,29 +39,29 @@ export async function POST(request: Request) {
     const {
       numero_guia,
       fecha_salida,
-      nombre_material,
-      cantidad_material,
-      unidad_medida,
       nombre_comprador,
       destino_ubicacion,
       placa_gandola,
+      materiales, // Array of materials
     } = body
 
+    // Insert main sale record
     const result = await query(
-      "INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_material, cantidad_material, unidad_medida, nombre_comprador, destino_ubicacion, placa_gandola) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        numero_guia,
-        fecha_salida,
-        nombre_material,
-        cantidad_material,
-        unidad_medida,
-        nombre_comprador,
-        destino_ubicacion,
-        placa_gandola,
-      ],
+      "INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola) VALUES (?, ?, ?, ?, ?)",
+      [numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola],
     )
 
-    return NextResponse.json({ success: true, result })
+    const ventaId = (result as any).insertId
+
+    for (const material of materiales) {
+      await query("INSERT INTO Detalles_Venta (id_salida, id_material, cantidad_material) VALUES (?, ?, ?)", [
+        ventaId,
+        material.id_material,
+        material.cantidad_material,
+      ])
+    }
+
+    return NextResponse.json({ success: true, id_salida: ventaId })
   } catch (error) {
     console.error("[v0] Error creating venta:", error)
     return NextResponse.json({ error: "Error al crear venta" }, { status: 500 })

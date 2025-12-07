@@ -96,16 +96,27 @@ CREATE TABLE IF NOT EXISTS Semana_Personal (
 );
 
 -- Tabla de Ventas y Salidas
+DROP TABLE IF EXISTS Detalles_Venta;
+DROP TABLE IF EXISTS Ventas_Salidas;
+
 CREATE TABLE IF NOT EXISTS Ventas_Salidas (
     id_salida INT AUTO_INCREMENT PRIMARY KEY,
     numero_guia VARCHAR(50) UNIQUE NOT NULL,
     fecha_salida DATETIME NOT NULL,
-    nombre_material VARCHAR(255) NOT NULL,
-    cantidad_material DECIMAL(10, 2) NOT NULL,
-    unidad_medida VARCHAR(50) NOT NULL,
     nombre_comprador VARCHAR(255) NOT NULL,
     destino_ubicacion TEXT NOT NULL,
-    placa_gandola VARCHAR(20)
+    placa_gandola VARCHAR(20),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Nueva tabla para line items de ventas (múltiples materiales por venta)
+CREATE TABLE IF NOT EXISTS Detalles_Venta (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_salida INT NOT NULL,
+    id_material INT NOT NULL,
+    cantidad_material DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (id_salida) REFERENCES Ventas_Salidas(id_salida) ON DELETE CASCADE,
+    FOREIGN KEY (id_material) REFERENCES Inventario_Materiales(id_material) ON DELETE CASCADE
 );
 
 -- Datos de ejemplo
@@ -156,7 +167,13 @@ INSERT INTO Materiales_Obtenidos (id_barco, nombre_material, fecha_registro, can
 (2, 'Aluminio', '2024-03-23', 320.00, 'Kg'),
 (3, 'Acero Naval', '2024-12-15', 1800.00, 'Kg');
 
-INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_material, cantidad_material, unidad_medida, nombre_comprador, destino_ubicacion, placa_gandola) VALUES
-('GU-2025-001', '2025-01-11 10:30:00', 'Acero Naval', 5000.00, 'Kg', 'Siderúrgica del Este C.A.', 'Zona Industrial, Valencia', 'ABC-123'),
-('GU-2025-002', '2025-01-12 14:15:00', 'Cobre', 250.00, 'Kg', 'Metales Reciclados S.A.', 'Av. Industrial, Maracay', 'DEF-456'),
-('GU-2025-003', '2025-01-13 09:00:00', 'Aluminio', 800.00, 'Kg', 'Aluminio Industrial C.A.', 'Zona Franca, Puerto Cabello', 'GHI-789');
+-- Datos de ejemplo para nuevas ventas y salidas
+INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola) VALUES
+('GU-2025-001', '2025-01-11 10:30:00', 'Siderúrgica del Este C.A.', 'Zona Industrial, Valencia', 'ABC-123'),
+('GU-2025-002', '2025-01-12 14:15:00', 'Metales Reciclados S.A.', 'Av. Industrial, Maracay', 'DEF-456');
+
+-- Datos de ejemplo para detalles de ventas
+INSERT INTO Detalles_Venta (id_salida, id_material, cantidad_material) VALUES
+(1, 1, 5000.00),
+(1, 2, 250.00),
+(2, 3, 800.00);
