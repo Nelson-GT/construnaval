@@ -10,9 +10,9 @@ interface HistorialSemanal {
   personal_asignado: any[]
 }
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const { id } = await params;
 
     // Obtener información del barco
     const barcos = await query("SELECT * FROM Barcos WHERE id_barco = ?", [id])

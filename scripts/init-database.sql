@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS Ventas_Salidas (
     nombre_comprador VARCHAR(255) NOT NULL,
     destino_ubicacion TEXT NOT NULL,
     placa_gandola VARCHAR(20),
+    total DECIMAL(12, 2) NOT NULL DEFAULT 0,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -168,9 +169,9 @@ INSERT INTO Materiales_Obtenidos (id_barco, nombre_material, fecha_registro, can
 (3, 'Acero Naval', '2024-12-15', 1800.00, 'Kg');
 
 -- Datos de ejemplo para nuevas ventas y salidas
-INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola) VALUES
-('GU-2025-001', '2025-01-11 10:30:00', 'Siderúrgica del Este C.A.', 'Zona Industrial, Valencia', 'ABC-123'),
-('GU-2025-002', '2025-01-12 14:15:00', 'Metales Reciclados S.A.', 'Av. Industrial, Maracay', 'DEF-456');
+INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola, total) VALUES
+('GU-2025-001', '2025-01-11 10:30:00', 'Siderúrgica del Este C.A.', 'Zona Industrial, Valencia', 'ABC-123', 15000.00),
+('GU-2025-002', '2025-01-12 14:15:00', 'Metales Reciclados S.A.', 'Av. Industrial, Maracay', 'DEF-456', 8500.00);
 
 -- Datos de ejemplo para detalles de ventas
 INSERT INTO Detalles_Venta (id_salida, id_material, cantidad_material) VALUES

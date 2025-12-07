@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const { id } = await params;
 
     // Obtener información del barco
     const barcos = await query("SELECT * FROM Barcos WHERE id_barco = ?", [id])

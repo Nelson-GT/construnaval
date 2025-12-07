@@ -2,10 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 
 // GET - Obtener detalles de una semana específica
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Obtener información de la semana
-    const semana: any = await query("SELECT * FROM Semanas_Barco WHERE id_semana = ?", [params.id])
+    const { id } = await params;
+    const semana: any = await query("SELECT * FROM Semanas_Barco WHERE id_semana = ?", [id])
 
     if (!semana || semana.length === 0) {
       return NextResponse.json({ error: "Semana no encontrada" }, { status: 404 })
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
        JOIN Inventario_Materiales im ON mc.id_material = im.id_material
        WHERE mc.id_semana = ?
        ORDER BY mc.fecha_registro DESC`,
-      [params.id],
+      [id],
     )
 
     // Obtener personal asignado
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
        FROM Semana_Personal sp
        JOIN Trabajadores t ON sp.id_trabajador = t.id_trabajador
        WHERE sp.id_semana = ?`,
-      [params.id],
+      [id],
     )
 
     return NextResponse.json({

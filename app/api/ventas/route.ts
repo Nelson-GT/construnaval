@@ -11,6 +11,7 @@ export async function GET() {
         vs.nombre_comprador,
         vs.destino_ubicacion,
         vs.placa_gandola,
+        vs.total,
         JSON_ARRAYAGG(
           JSON_OBJECT(
             'id_detalle', dv.id_detalle,
@@ -36,28 +37,30 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const {
-      numero_guia,
-      fecha_salida,
-      nombre_comprador,
-      destino_ubicacion,
-      placa_gandola,
-      materiales, // Array of materials
-    } = body
+    const { numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola, total, materiales } = body
 
-    // Insert main sale record
+    if (!materiales || materiales.length === 0) {
+      return NextResponse.json({ error: "Debe añadir al menos un material" }, { status: 400 })
+    }
+
     const result = await query(
-      "INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola) VALUES (?, ?, ?, ?, ?)",
-      [numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola],
+      "INSERT INTO Ventas_Salidas (numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola, total) VALUES (?, ?, ?, ?, ?, ?)",
+      [numero_guia, fecha_salida, nombre_comprador, destino_ubicacion, placa_gandola, total],
     )
 
     const ventaId = (result as any).insertId
 
     for (const material of materiales) {
+      // Insert material detail
       await query("INSERT INTO Detalles_Venta (id_salida, id_material, cantidad_material) VALUES (?, ?, ?)", [
         ventaId,
         material.id_material,
         material.cantidad_material,
+      ])
+
+      await query("UPDATE Inventario_Materiales SET stock_actual = stock_actual - ? WHERE id_material = ?", [
+        material.cantidad_material,
+        material.id_material,
       ])
     }
 

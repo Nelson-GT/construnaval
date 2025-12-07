@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 
 // GET - Obtener todas las semanas de un barco
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const semanas = await query(
       `SELECT s.*, 
         (SELECT COUNT(*) FROM Semana_Personal WHERE id_semana = s.id_semana) as total_trabajadores,
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
        FROM Semanas_Barco s 
        WHERE s.id_barco = ? 
        ORDER BY s.numero_semana DESC`,
-      [params.id],
+      [id],
     )
 
     return NextResponse.json(semanas)
@@ -22,8 +23,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST - Crear nueva semana para un barco
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json()
     const { fecha_inicio, trabajadores } = body
 
@@ -35,14 +37,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Obtener el número de semana (última semana + 1)
     const ultimaSemana: any = await query(
       "SELECT MAX(numero_semana) as max_semana FROM Semanas_Barco WHERE id_barco = ?",
-      [params.id],
+      [id],
     )
     const numeroSemana = (ultimaSemana[0]?.max_semana || 0) + 1
 
     // Crear la semana
     const result: any = await query(
       "INSERT INTO Semanas_Barco (id_barco, numero_semana, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)",
-      [params.id, numeroSemana, fecha_inicio, fechaFin.toISOString().split("T")[0]],
+      [id, numeroSemana, fecha_inicio, fechaFin.toISOString().split("T")[0]],
     )
 
     const idSemana = result.insertId

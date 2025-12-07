@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const { id } = await params;
     const body = await request.json()
     const { cedula, nombre, apellido, correo, telefono, direccion, puesto, salario, fecha_contratacion } = body
 
@@ -19,9 +19,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const { id } = await params;
     await query("DELETE FROM Trabajadores WHERE id_trabajador = ?", [id])
     return NextResponse.json({ success: true })
   } catch (error) {
