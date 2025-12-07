@@ -1,0 +1,32 @@
+import type React from "react"
+import type { Metadata } from "next"
+import { Analytics } from "@vercel/analytics/next"
+import "./globals.css"
+import { AppSidebar } from "@/components/app-sidebar"
+import { Suspense } from "react"
+
+export const metadata: Metadata = {
+  title: "Construnaval - Sistema de Gestión",
+  description: "Sistema de gestión para desguace naval",
+  generator: "v0.app",
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="es">
+      <body className="font-sans" suppressHydrationWarning={true}>
+        <div className="flex h-screen">
+          <Suspense fallback={<div>Cargando...</div>}>
+            <AppSidebar />
+            <main className="flex-1 overflow-y-auto">{children}</main>
+          </Suspense>
+        </div>
+        <Analytics />
+      </body>
+    </html>
+  )
+}
