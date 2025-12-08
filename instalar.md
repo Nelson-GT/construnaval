@@ -20,11 +20,13 @@
 - Tipo de Sistema
 
 ## requisitos
+- MySql (HeidiSql)
 - npm
 - node.js
 - pm2 (npm install -g pm2)
 
 #### Pasos:
+- Vaciar la base de datos de prueba
 - npm install
 - npm install -g pm2
 - npm run build
