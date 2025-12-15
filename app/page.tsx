@@ -1,8 +1,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Ship, Package, DollarSign, Users } from "lucide-react"
 import { barcosData, inventarioMaterialesData, ventasSalidasData, trabajadoresData } from "@/lib/mock-data"
+import useSWR from "swr"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function DashboardPage() {
+
+  interface DashboardData {
+    barcosData: number
+    inventarioMaterialesData: number
+    ventasSalidasData: number
+    trabajadoresData: number
+  }
+  //const { barcosData, inventarioMaterialesData, ventasSalidasData, trabajadoresData } = useSWR<DashboardData[]>("/api/dashboard", fetcher)
+  //const { data: barcos } = useSWR<DashboardData[]>("/api/dashboard", fetcher)
   const barcosActivos = barcosData.filter((b) => b.estado === "Activo").length
   const totalMateriales = inventarioMaterialesData.length
   const totalVentas = ventasSalidasData.length
