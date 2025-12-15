@@ -192,7 +192,7 @@ export default function InventarioPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold">{material.stock_actual.toString()}</p>
-                    {material.stock_actual <= material.stock_minimo && (
+                    {Number(material.stock_actual) <= Number(material.stock_minimo) && (
                       <Badge variant="destructive" className="gap-1 mt-1">
                         <AlertTriangle className="h-3 w-3" />
                         Bajo
@@ -220,7 +220,7 @@ export default function InventarioPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold">{material.stock_actual.toString()}</p>
-                    {material.stock_actual <= material.stock_minimo && (
+                    {Number(material.stock_actual) <= Number(material.stock_minimo) && (
                       <Badge variant="destructive" className="gap-1 mt-1">
                         <AlertTriangle className="h-3 w-3" />
                         Bajo
@@ -274,7 +274,7 @@ export default function InventarioPage() {
                   <TableCell>{material.stock_minimo.toString()}</TableCell>
                   <TableCell>{material.unidad_medida}</TableCell>
                   <TableCell>
-                    {material.stock_actual <= material.stock_minimo ? (
+                    {Number(material.stock_actual) <= Number(material.stock_minimo) ? (
                       <Badge variant="destructive" className="gap-1">
                         <AlertTriangle className="h-3 w-3" />
                         Stock Bajo
