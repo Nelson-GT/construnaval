@@ -1,6 +1,6 @@
+'use client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Ship, Package, DollarSign, Users } from "lucide-react"
-import { barcosData, inventarioMaterialesData, ventasSalidasData, trabajadoresData } from "@/lib/mock-data"
 import useSWR from "swr"
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -13,12 +13,15 @@ export default function DashboardPage() {
     ventasSalidasData: number
     trabajadoresData: number
   }
-  //const { barcosData, inventarioMaterialesData, ventasSalidasData, trabajadoresData } = useSWR<DashboardData[]>("/api/dashboard", fetcher)
-  //const { data: barcos } = useSWR<DashboardData[]>("/api/dashboard", fetcher)
-  const barcosActivos = barcosData.filter((b) => b.estado === "Activo").length
-  const totalMateriales = inventarioMaterialesData.length
-  const totalVentas = ventasSalidasData.length
-  const trabajadoresActivos = trabajadoresData.length
+
+  const { data, error, isLoading } = useSWR<DashboardData>("/api/dashboard", fetcher)
+  const barcosActivos = data?.barcosData ?? 0
+  const totalMateriales = data?.inventarioMaterialesData ?? 0
+  const totalVentas = data?.ventasSalidasData ?? 0
+  const trabajadoresActivos = data?.trabajadoresData ?? 0
+
+  if (error) return <div>Error al cargar datos</div>
+  if (isLoading) return <div>Cargando dashboard...</div>
 
   return (
     <div className="p-8">
@@ -73,8 +76,10 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* El resto de tus cards estáticas se mantienen igual */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+         {/* ... (tu código de tarjetas de módulos sigue igual) ... */}
+          <Card>
           <CardHeader>
             <CardTitle>Módulo de Producción</CardTitle>
             <CardDescription>Control completo de barcos en desguace</CardDescription>
