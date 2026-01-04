@@ -26,7 +26,7 @@ export function SalesStatsPanel() {
     },
     {
       title: "Comprador Top (Último Mes)",
-      value: stats?.compradorTop?.nombre_comprador || "N/A",
+      value: stats?.compradorTop?.nombre_comprador || "----",
       icon: User,
       color: "text-purple-500",
       bgColor: "bg-purple-50",
@@ -34,7 +34,7 @@ export function SalesStatsPanel() {
     },
     {
       title: "Material Más Vendido (Último Mes)",
-      value: stats?.materialTop?.nombre_material || "N/A",
+      value: stats?.materialTop?.nombre_material || "----",
       icon: Package,
       color: "text-orange-500",
       bgColor: "bg-orange-50",
@@ -47,16 +47,16 @@ export function SalesStatsPanel() {
       {statCards.map((stat, index) => {
         const Icon = stat.icon
         return (
-          <Card key={index} className={stat.bgColor}>
+          <Card key={index} className={`flex flex-col justify-between ${stat.bgColor}`}>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                 <Icon className={`h-5 w-5 ${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              {stat.subtitle && <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>}
+              <p className="text-xs text-muted-foreground mt-1">{stat.subtitle ? stat.subtitle : " "}</p>
             </CardContent>
           </Card>
         )
