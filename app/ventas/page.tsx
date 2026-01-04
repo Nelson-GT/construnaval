@@ -28,6 +28,8 @@ interface Filters {
   totalFrom?: number
   totalTo?: number
   guideNumber?: string
+  actaNumber?: string
+  codeNumber?: string
 }
 
 export default function VentasPage() {
@@ -41,11 +43,20 @@ export default function VentasPage() {
   const [isDeleting, setIsDeleting] = useState<number | null>(null)
   const [filters, setFilters] = useState<Filters>({})
 
+  const normalize = (text: any) => {
+    if (!text) return ""
+    return String(text)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[^a-z0-9]/g, "")
+  }
+
   const filteredVentas = ventas?.filter((v: any) => {
-    if (filters.guideNumber && !v.numero_guia.toLowerCase().includes(filters.guideNumber.toLowerCase())) return false
-    if (filters.buyerName && !v.nombre_comprador.toLowerCase().includes(filters.buyerName.toLowerCase())) return false
-    if (filters.destination && !v.destino_ubicacion.toLowerCase().includes(filters.destination.toLowerCase()))
-      return false
+    if (filters.guideNumber && !normalize(v.numero_guia).includes(normalize(filters.guideNumber))) return false
+    if (filters.actaNumber && !normalize(v.acto_inspeccion).includes(normalize(filters.actaNumber))) return false
+    if (filters.codeNumber && !normalize(v.codigo_control).includes(normalize(filters.codeNumber))) return false
+    if (filters.buyerName && !normalize(v.nombre_comprador).includes(normalize(filters.buyerName))) return false
+    if (filters.destination && !normalize(v.destino_ubicacion).includes(normalize(filters.destination))) return false
     if (filters.dateFrom && new Date(v.fecha_salida) < new Date(filters.dateFrom)) return false
     if (filters.dateTo && new Date(v.fecha_salida) > new Date(filters.dateTo)) return false
     if (filters.totalFrom && v.total < filters.totalFrom) return false
@@ -159,6 +170,8 @@ export default function VentasPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Guía</TableHead>
+                  <TableHead>Act Insp N°</TableHead>
+                  <TableHead>Código</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Comprador</TableHead>
                   <TableHead>Destino</TableHead>
@@ -171,6 +184,8 @@ export default function VentasPage() {
                 {filteredVentas?.map((venta: any) => (
                   <TableRow key={venta.id_salida}>
                     <TableCell className="font-mono text-sm">{venta.numero_guia}</TableCell>
+                    <TableCell className="font-mono text-sm">{venta.acto_inspeccion}</TableCell>
+                    <TableCell className="font-mono text-sm">{venta.codigo_control}</TableCell>
                     <TableCell>{new Date(venta.fecha_salida).toLocaleDateString("es-VE")}</TableCell>
                     <TableCell>{venta.nombre_comprador}</TableCell>
                     <TableCell className="text-sm">{venta.destino_ubicacion}</TableCell>

@@ -14,6 +14,8 @@ interface Filters {
   totalFrom?: number
   totalTo?: number
   guideNumber?: string
+  actaNumber?: string
+  codeNumber?: string
 }
 
 interface SalesFilterBarProps {
@@ -52,6 +54,25 @@ export function SalesFilterBar({ onFilter, onClear }: SalesFilterBarProps) {
                 placeholder="GU-2025-001"
                 value={filters.guideNumber || ""}
                 onChange={(e) => setFilters({ ...filters, guideNumber: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Act Insp N°</Label>
+              <Input
+                placeholder="00000-AAA"
+                value={filters.actaNumber || ""}
+                onChange={(e) => setFilters({ ...filters, actaNumber: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label className="text-xs font-semibold">Código</Label>
+              <Input
+                placeholder="AA-AAAAA-000-0000"
+                value={filters.codeNumber || ""}
+                onChange={(e) => setFilters({ ...filters, codeNumber: e.target.value })}
               />
             </div>
             <div>
