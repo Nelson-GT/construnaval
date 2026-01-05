@@ -30,6 +30,7 @@ interface Filters {
   guideNumber?: string
   actaNumber?: string
   codeNumber?: string
+  materialDescription?: string
 }
 
 export default function VentasPage() {
@@ -61,6 +62,13 @@ export default function VentasPage() {
     if (filters.dateTo && new Date(v.fecha_salida) > new Date(filters.dateTo)) return false
     if (filters.totalFrom && v.total < filters.totalFrom) return false
     if (filters.totalTo && v.total > filters.totalTo) return false
+    if (filters.materialDescription) {
+      const tieneMaterial = v.materiales?.some((m: any) => 
+        normalize(m.descripcion_material).includes(normalize(filters.materialDescription))
+      )
+      if (!tieneMaterial) return false
+    }
+
     return true
   })
 
@@ -211,7 +219,6 @@ export default function VentasPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              console.log(venta)
                               setEditingVenta(venta)
                               setIsEditOpen(true)
                             }}

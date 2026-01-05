@@ -7,11 +7,21 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Producción", href: "/produccion", icon: Ship },
-  { name: "Inventario", href: "/inventario", icon: Package },
-  { name: "Ventas", href: "/ventas", icon: DollarSign },
-  { name: "Trabajadores", href: "/trabajadores", icon: Users },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard,
+    allowedRoles: ["admin", "produccion", "ventas"]
+  },
+  { name: "Producción", href: "/produccion", icon: Ship,
+    allowedRoles: ["admin", "produccion"]
+  },
+  { name: "Inventario", href: "/inventario", icon: Package,
+    allowedRoles: ["admin", "produccion", "ventas"]
+  },
+  { name: "Ventas", href: "/ventas", icon: DollarSign,
+    allowedRoles: ["admin", "ventas"]
+  },
+  { name: "Trabajadores", href: "/trabajadores", icon: Users,
+    allowedRoles: ["admin", "produccion"]
+  },
 ]
 
 export function AppSidebar({ user }: { user: any }) {
@@ -41,6 +51,9 @@ export function AppSidebar({ user }: { user: any }) {
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
+          if (user && !item.allowedRoles.includes(user.rol)) {
+            return null
+          }
           const isActive = pathname === item.href
           return (
             <Link

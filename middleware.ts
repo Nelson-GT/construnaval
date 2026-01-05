@@ -45,7 +45,6 @@ export async function middleware(request: NextRequest) {
       if (path.startsWith(route)) {
         // Si el rol del usuario NO está en la lista permitida
         if (!allowedRoles.includes(userRole)) {
-          console.log(`Acceso denegado a ${userRole} en ${path}`)
           // Redirigir al inicio (Dashboard general)
           return NextResponse.redirect(new URL("/", request.url))
         }

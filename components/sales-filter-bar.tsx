@@ -16,6 +16,7 @@ interface Filters {
   guideNumber?: string
   actaNumber?: string
   codeNumber?: string
+  materialDescription?: string
 }
 
 interface SalesFilterBarProps {
@@ -81,6 +82,17 @@ export function SalesFilterBar({ onFilter, onClear }: SalesFilterBarProps) {
                 placeholder="Nombre del comprador"
                 value={filters.buyerName || ""}
                 onChange={(e) => setFilters({ ...filters, buyerName: e.target.value })}
+              />
+            </div>
+          </div>
+          
+          <div className="grid gap-4 mb-4">
+            <div>
+              <Label className="text-xs font-semibold">Materiales</Label>
+              <Input
+                placeholder="Material Ferroso"
+                value={filters.materialDescription || ""}
+                onChange={(e) => setFilters({ ...filters, materialDescription: e.target.value })}
               />
             </div>
           </div>
