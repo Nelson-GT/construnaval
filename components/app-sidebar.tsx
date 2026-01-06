@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Ship, Package, DollarSign, Users, LayoutDashboard, LogOut, User, Shield } from "lucide-react"
+import { Ship, Package, DollarSign, Users, LayoutDashboard, LogOut, User, Shield, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -21,6 +21,9 @@ const navigation = [
   },
   { name: "Trabajadores", href: "/trabajadores", icon: Users,
     allowedRoles: ["admin", "produccion"]
+  },
+  { name: "Usuarios", href: "/usuarios", icon: Settings,
+    allowedRoles: ["admin"]
   },
 ]
 

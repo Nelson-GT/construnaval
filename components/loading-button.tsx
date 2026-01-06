@@ -3,10 +3,11 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 
-interface LoadingButtonProps extends React.ComponentProps<typeof Button> {
+type ButtonProps = React.ComponentProps<typeof Button>
+
+interface LoadingButtonProps extends ButtonProps {
   isLoading?: boolean
   loadingText?: string
-  children: React.ReactNode
 }
 
 export function LoadingButton({
@@ -17,7 +18,7 @@ export function LoadingButton({
   ...props
 }: LoadingButtonProps) {
   return (
-    <Button {...props} disabled={isLoading || disabled}>
+    <Button disabled={isLoading || disabled} {...props}>
       {isLoading ? loadingText : children}
     </Button>
   )
